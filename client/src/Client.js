@@ -1,144 +1,113 @@
 import React, {Component} from 'react';
-import {Widget, addResponseMessage, addUserMessage, dropMessages} from 'react-chat-widget';
-import {CometChat} from '@cometchat-pro/chat';
-
-import config from './config';
+import {Widget, addResponseMessage, addUserMessage} from 'react-chat-widget';
+import { clients, chat } from './jexia.js'
 import 'react-chat-widget/lib/styles.css';
 
-const agentUID = config.agentUID;
-const CUSTOMER_MESSAGE_LISTENER_KEY = "client-listener";
+const cookie_id  = 'jxuid'
 const limit = 30;
 
 class Client extends Component {
   componentDidMount() {
-    addResponseMessage('Welcome to our store!');
-    addResponseMessage('Are you looking for anything in particular?');
-    
-    let uid = localStorage.getItem("cc-uid");
-    // check for uid, if exist then get auth token, login, create message listener and fetch previous messages
-   if ( uid !== null) {
-     this.fetchAuthToken(uid).then(
-       result => {
-         console.log('auth token fetched', result);
-         CometChat.login(result.authToken)
-         .then( user => {
-           console.log("Login successfully:", { user });
-           this.createMessageListener();
-           this.fetchPreviousMessages();
-           
-        })
-       },
-       error => {
-         console.log('Initialization failed with error:', error);
-       }
-     );
-   }
-  }
+    let session_id = localStorage.getItem(cookie_id);
+    // check if no session_id in localstorage create new one and save in Jexia DataSet Users
+    if (session_id === null)
+    {
+      this.createUser().then(
+        result => {
+          //register user visit
+          localStorage.setItem(cookie_id,result[0].session_id);
+          addResponseMessage('Welcome to our store!');
+          addResponseMessage('Are you looking for anything in particular?');
+        },
+        error => {
+          console.log('Can\'t register session_id:', error);
+        }) 
+    } else {
+      // if user already created just get his chat history.
+      this.fetchPreviousMessages(session_id)
+      
+      this.subscription = chat.watch("created")
+      .subscribe(messageObject => {
+        let id = messageObject.data[0].id
+        //Get value only this record
+        chat.select()
+        .where(field => field("id").isEqualTo(id))
+        .subscribe(
+          msg=>{
+            if(!msg[0].is_user) addResponseMessage(msg[0].txt);
+          },
+          err=>{console.log(err);
+          }
+        )
+      }, error => {
+        console.log(error);
+      });
 
-  fetchAuthToken = async uid => {
-    const response = await fetch(`/api/auth?uid=${uid}`)
-    const result = await response.json()
-    return result;
+    } 
+  }
+ 
+  uuid() {
+    //this is just to generate random session id
+    const uint32 = window.crypto.getRandomValues(new Uint32Array(1))[0];
+    return uint32.toString(16);
   }
 
   createUser = async () => {
-    const response = await fetch(`/api/create`)
-    const result = await response.json()
-    return result;
+    let session_id = this.uuid() 
+    return clients
+    .insert({
+      session_id:session_id
+      // other webbrowser tracking staff
+    }).toPromise()
+  }
+  
+  saveMsg = async (data) => {
+    // Add chat message to log
+    return chat.insert(data).toPromise()
   }
 
-  createMessageListener = () => {
-    CometChat.addMessageListener(
-      CUSTOMER_MESSAGE_LISTENER_KEY,
-      new CometChat.MessageListener({
-        onTextMessageReceived: message => {
-          console.log("Incoming Message Log", { message });
-          addResponseMessage(message.text);
-        }
-      })
-    );
-  }
-
-  fetchPreviousMessages = () => {
-    var messagesRequest = new CometChat.MessagesRequestBuilder()
-    .setUID(agentUID)
-    .setLimit(limit)
-    .build();
-
-    messagesRequest.fetchPrevious().then(
-      messages => {
-        console.log("Message list fetched:", messages);
-        messages.forEach( message => {
-          if(message.receiver !== agentUID){
-            addResponseMessage(message.text);
-          } else {
-            addUserMessage(message.text)
-          }
-        });
+  fetchPreviousMessages = (id) => {
+    //Fetching chat history for current user with limit
+    chat.select()
+    .limit(limit)
+    .where(field => field("session_id").isEqualTo(id))
+    .subscribe(
+      messages=>{
+        messages.forEach(message => {          
+          if(message.is_user)
+            addResponseMessage(message.txt);  
+          else 
+            addUserMessage(message.txt);  
+        })
       },
-      error => {
-        console.log("Message fetching failed with error:", error);
-      }
-    );
+      error=>{console.log("Message fetching failed with error:", error);}
+    )
   }
 
   handleNewUserMessage = newMessage => {
-    console.log(`New message incoming! ${newMessage}`);
-    var textMessage = new CometChat.TextMessage(
-      agentUID,
-      newMessage,
-      CometChat.MESSAGE_TYPE.TEXT,
-      CometChat.RECEIVER_TYPE.USER
-    );
-    let uid = localStorage.getItem("cc-uid");
-
-    if (uid === null) {
-      this.createUser().then(
+    let uid = localStorage.getItem(cookie_id);
+    var msg = {
+      session_id:uid,
+      txt:newMessage,
+      is_user:true,
+      read:false
+    }; 
+    if (uid) {
+      this.saveMsg(msg).then(
         result => {
-          console.log('auth token fetched', result);
-          localStorage.setItem("cc-uid",result.uid)
-          CometChat.login(result.authToken)
-          .then(user => {
-            console.log("Login successfully:", { user });
-            CometChat.sendMessage(textMessage).then(
-              message => {
-                console.log('Message sent successfully:', message);
-              },
-              error => {
-                console.log('Message sending failed with error:', error);
-              }
-            );
-            CometChat.addMessageListener(
-              CUSTOMER_MESSAGE_LISTENER_KEY,
-              new CometChat.MessageListener({
-                onTextMessageReceived: message => {
-                  console.log("Incoming Message Log", { message });
-                  addResponseMessage(message.text);
-                }
-              })
-            );
-          })
-      },
-      error => {
-        console.log('Initialization failed with error:', error);
-      })
-    } else {
-      // we have uid, do send
-      CometChat.sendMessage(textMessage).then(
-        message => {
-          console.log('Message sent successfully:', message);
+          //Save message
+          //console.log(result);
         },
         error => {
-          console.log('Message sending failed with error:', error);
-        }
-      );
+          console.log('Can\'t send message:', error);
+        }) 
+    } else {
+      console.log('cant get user ID');
     }
   };
 
   componentWillUnmount() {
-    CometChat.removeMessageListener(CUSTOMER_MESSAGE_LISTENER_KEY);
-    CometChat.logout();
-    dropMessages();
+    this.subscription.unsubscribe();
   }
 
   render() {
@@ -146,7 +115,7 @@ class Client extends Component {
       <div className='App'>
         <Widget
           handleNewUserMessage={this.handleNewUserMessage}
-          title='My E-commerce Live Chat'
+          title='Jexia Support Chat'
           subtitle='Ready to help you'
         />
       </div>

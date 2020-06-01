@@ -1,11 +1,7 @@
 import React, {Component} from 'react';
-
-import {CometChat} from '@cometchat-pro/chat';
+import { clients, chat, ums } from './jexia.js' //
 import MDSpinner from "react-md-spinner";
-import config from './config';
 
-const agentUID = config.agentUID;
-const AGENT_MESSAGE_LISTENER_KEY = 'agent-listener'
 const limit = 30;
 
 class Agent extends Component {
@@ -19,92 +15,74 @@ class Agent extends Component {
   }
 
   componentDidMount(){
-    this.fetchAuthToken(agentUID).then(
-      authToken => {
-        console.log('auth token fetched', authToken);
-        CometChat.login(authToken)
-        .then( user => {
-          console.log("Login successfully:", { user });
-          this.fetchUsers().then(result => {
-            this.setState({
-              customers: result,
-              customerIsLoading: false
-            })
-          });
-          
-          CometChat.addMessageListener(
-            AGENT_MESSAGE_LISTENER_KEY,
-            new CometChat.MessageListener({
-              onTextMessageReceived: message => {
-                let {customers, selectedCustomer, chat} = this.state;
-                console.log("Incoming Message Log", { message });
-                if(selectedCustomer === message.sender.uid){
-                  chat.push(message);
-                  this.setState({
-                    chat
-                  })
-                } else {
-                  let aRegisteredCustomer = customers.filter( customer => { return customer.uid === message.sender.uid }); 
-                  if(!aRegisteredCustomer.length){
-                    customers.push(message.sender)
-                    this.setState({
-                      customers
-                    })
-                  }
-                }
-              }
-            })
-          );
-       })
-      },
-      error => {
-        console.log('Initialization failed with error:', error);
-      }
-    );
-  }
-
-  fetchAuthToken = async uid => {
-    const response = await fetch(`/api/auth?uid=${uid}`)
-    const result = await response.json()
-    return result.authToken;
-  }
-
-  fetchUsers = async () => {
-    const response = await fetch(`/api/users`)
-    const result = await response.json()
-    return result;
-  }
-
+    ums.signIn({    
+      email: 'jexia@user.com',    
+      password: '123'
+    }).subscribe(user => {
+       // if signIn for agend is good, we can fetch data...
+       clients.select().subscribe(
+        result=>{
+          this.setState({
+            customers: result,
+            customerIsLoading: false,
+          })
+        },
+        error=>{console.log(error);}
+       )
+    }, error=>{
+      console.log(error)
+    });
+    
+    this.subscription = chat.watch("created")
+      .subscribe(messageObject => {
+        let id = messageObject.data[0].id
+        //Get value only this record
+        chat.select()
+        .where(field => field("id").isEqualTo(id))
+        .subscribe(
+          msg=>{
+            if(msg[0].is_user){
+              this.setState({
+                chat:this.state.chat.concat(msg)
+              })
+            }
+          },
+          err=>{console.log(err);
+          }
+        )
+      }, error => {
+        console.log(error);
+      });
+  } 
+  
   handleSubmit = event => {
     event.preventDefault();
     let message = this.refs.message.value;
 
-    var textMessage = new CometChat.TextMessage(
-      this.state.selectedCustomer,
-      message,
-      CometChat.MESSAGE_TYPE.TEXT,
-      CometChat.RECEIVER_TYPE.USER
-    );
-
-    CometChat.sendMessage(textMessage).then(
-      message => {
-        let {chat} = this.state;
-        console.log('Message sent successfully:', message);
-        chat.push(message);
+    var textMessage = {
+      session_id:this.state.selectedCustomer,
+      txt:message,
+      is_user:false,
+      read:false
+    }
+    
+    chat.insert(textMessage).subscribe(
+      data=>{
+        //let d =
+        //d.push()
         this.setState({
-          chat
+          chat:this.state.chat.concat(data)
         })
       },
-      error => {
-        console.log('Message sending failed with error:', error);
+      err=>{console.log(err);
       }
-    );
+    )
     this.refs.message.value='';
   }
 
   componentWillUnmount(){
-    CometChat.removeMessageListener(AGENT_MESSAGE_LISTENER_KEY);
-    CometChat.logout();
+    //CometChat.removeMessageListener(AGENT_MESSAGE_LISTENER_KEY);
+    //CometChat.logout();
   }
 
   selectCustomer = uid => {
@@ -118,23 +96,18 @@ class Agent extends Component {
       chat: [],
       chatIsLoading: true
     }, () => {
-      var messagesRequest = new CometChat.MessagesRequestBuilder()
-      .setUID(uid)
-      .setLimit(limit)
-      .build();
-
-      messagesRequest.fetchPrevious().then(
-        messages => {
-          console.log("Message list fetched:", messages);
-          this.setState({
-            chat: messages,
-            chatIsLoading: false
-          })
-        },
-        error => {
-          console.log("Message fetching failed with error:", error);
-        }
-      );
+        chat.select()
+        .limit(limit)
+        .where(field => field("session_id").isEqualTo(uid))
+        .subscribe(
+          messages=>{  
+            this.setState({
+              chat: messages,
+              chatIsLoading: false
+            })
+          },
+          error=>{console.log("Message fetching failed with error:", error);}
+        )
     });
   }
 
@@ -202,8 +175,8 @@ class ChatBox extends Component {
             chat
             .map(chat => 
               <div key={chat.id} className="message">
-                <div className={`${chat.receiver !== agentUID ? 'balon1': 'balon2'} p-3 m-1`}>
-                  {chat.text}
+                <div className={`${chat.is_user ? 'balon1': 'balon2'} p-3 m-1`}>
+                  {chat.txt}
                 </div>
               </div>)
           }  
@@ -232,9 +205,9 @@ class CustomerList extends Component {
             customers
             .map(customer => 
               <li 
-                key={customer.uid} 
-                className={`list-group-item ${customer.uid === selectedCustomer ? 'active':''}`} 
-                onClick={() => this.props.selectCustomer(customer.uid)}>{customer.name} </li>)
+                key={customer.id} 
+                className={`list-group-item ${customer.session_id === selectedCustomer ? 'active':''}`} 
+                onClick={() => this.props.selectCustomer(customer.session_id)}> Customer { customer.session_id }  </li>)
           }                
         </ul>
       )

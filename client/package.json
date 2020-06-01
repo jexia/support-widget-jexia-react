@@ -5,6 +5,7 @@
   "dependencies": {
     "@cometchat-pro/chat": "^1.0.3",
     "bootstrap": "^4.2.1",
+    "jexia-sdk-js": "^4.10.2",
     "react": "^16.7.0",
     "react-chat-widget": "^2.1.4-1",
     "react-dom": "^16.7.0",
