@@ -14,8 +14,8 @@ To run the demo first setup Jexia project:
 1. We need to have dataset with name clients. You can use schemaless approach and do not create fields. I did it to have some basic validations and default values. In this dataset we will keep sessions which was open. ![clients dataset](screenshot/project_ds.png)
 2. We need to have another dataset with name chat to keep chat history between client and agent ![chat dataset](screenshot/project_chat.png)
 3. Create 1 project user for Agent ![chat dataset](screenshot/ums.png)
-4. Create API key / secret which we will put into `client/src/jexia.js` ![chat dataset](screenshot/project_api.png)
-5. Setup policy for API, we need access for clients and chat dataset - Read, Create. ![chat dataset](screenshot/project_policy.png)
+4. Create API key / secret which we will put into `client/src/jexia.js` ![chat dataset](screenshot/api_key.png)
+5. Setup policy for API, we need access for clients and chat dataset - Read, Create. ![chat dataset](screenshot/policy.png)
 6. `cd client && npm install`
 7. `npm run start`
 
