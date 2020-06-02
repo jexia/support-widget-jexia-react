@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import { clients, chat, ums } from './jexia.js' //
+import { clients, chat, ums, agent_cred } from './jexia.js' //
 import MDSpinner from "react-md-spinner";
 
 const limit = 30;
@@ -15,10 +15,7 @@ class Agent extends Component {
   }
 
   componentDidMount(){
-    ums.signIn({    
-      email: 'project@user.com',    
-      password: '123'
-    }).subscribe(user => {
+    ums.signIn(agent_cred).subscribe(user => {
        // if signIn for agend is good, we can fetch data...
        clients.select().subscribe(
         result=>{
@@ -68,8 +65,6 @@ class Agent extends Component {
     
     chat.insert(textMessage).subscribe(
       data=>{
-        //let d =
-        //d.push()
         this.setState({
           chat:this.state.chat.concat(data)
         })
@@ -81,8 +76,6 @@ class Agent extends Component {
   }
 
   componentWillUnmount(){
-    //CometChat.removeMessageListener(AGENT_MESSAGE_LISTENER_KEY);
-    //CometChat.logout();
   }
 
   selectCustomer = uid => {
