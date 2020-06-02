@@ -16,7 +16,7 @@ class Agent extends Component {
 
   componentDidMount(){
     ums.signIn({    
-      email: 'jexia@user.com',    
+      email: 'project@user.com',    
       password: '123'
     }).subscribe(user => {
        // if signIn for agend is good, we can fetch data...
