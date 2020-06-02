@@ -9,24 +9,8 @@ const limit = 30;
 class Client extends Component {
   componentDidMount() {
     let session_id = localStorage.getItem(cookie_id);
-    // check if no session_id in localstorage create new one and save in Jexia DataSet Users
-    if (session_id === null)
-    {
-      this.createUser().then(
-        result => {
-          //register user visit
-          localStorage.setItem(cookie_id,result[0].session_id);
-          addResponseMessage('Welcome to our store!');
-          addResponseMessage('Are you looking for anything in particular?');
-        },
-        error => {
-          console.log('Can\'t register session_id:', error);
-        }) 
-    } else {
-      // if user already created just get his chat history.
-      this.fetchPreviousMessages(session_id)
-      
-      this.subscription = chat.watch("created")
+    // 
+    this.subscription = chat.watch("created")
       .subscribe(messageObject => {
         let id = messageObject.data[0].id
         //Get value only this record
@@ -43,6 +27,22 @@ class Client extends Component {
         console.log(error);
       });
 
+    // check if no session_id in localstorage create new one and save in Jexia DataSet Users
+    if (session_id === null)
+    {
+      this.createUser().then(
+        result => {
+          //register user visit
+          localStorage.setItem(cookie_id,result[0].session_id);
+          addResponseMessage('Welcome to our store!');
+          addResponseMessage('Are you looking for anything in particular?');
+        },
+        error => {
+          console.log('Can\'t register session_id:', error);
+        }) 
+    } else {
+      // if user already created just get his chat history.
+      this.fetchPreviousMessages(session_id)
     } 
   }
  
