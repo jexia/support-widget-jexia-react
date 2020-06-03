@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { Widget, addResponseMessage, addUserMessage } from 'react-chat-widget';
-import { clients, chat, rtc } from './jexia.js'
+import { clients, chat, my_ds_rtc } from './jexia.js'
 import 'react-chat-widget/lib/styles.css';
 
 const cookie_id = 'jxuid'
@@ -29,7 +29,7 @@ class Client extends Component {
                 console.log(error);
             });
 
-        this.subscription = rtc.watch("created", "updated", "deleted")
+        this.subscription = my_ds_rtc.watch("created", "updated", "deleted")
             .subscribe(messageObject => {
                 console.log("Realtime message recieved:", messageObject.data); // message received
             }, error => {

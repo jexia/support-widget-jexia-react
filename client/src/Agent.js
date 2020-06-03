@@ -53,6 +53,8 @@ class Agent extends Component {
             });
     }
 
+
+
     handleSubmit = event => {
         event.preventDefault();
         let message = this.refs.message.value;
@@ -63,6 +65,7 @@ class Agent extends Component {
             is_user: false,
             read: false
         }
+
 
         chat.insert(textMessage).subscribe(
             data => {
