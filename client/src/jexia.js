@@ -2,7 +2,7 @@
 // Please, use your credentials.
 const projectID = "90455dd3-42ba-4f10-8c9e-7a5799e383be";
 const key = "def6b422-8bc5-4687-be25-0d595e07339b";
-const secret = "/H+BRheP5lP3qSKYTpauhe9UEP1LKw7O05ur20SfZHiCPMI6Hm92fyWnJ0S59C7aXrPu9YuOoUFSDQID+6ifSrw==";
+const secret = "H+BRheP5lP3qSKYTpauhe9UEP1LKw7O05ur20SfZHiCPMI6Hm92fyWnJ0S59C7aXrPu9YuOoUFSDQID+6ifSrw==";
 
 // Here is Project User what you created in point 3 from Readme
 const agent_cred = {
@@ -23,6 +23,7 @@ jexiaSDK.jexiaClient().init({
 
 const clients = ds.dataset('clients')
 const chat = ds.dataset('chat')
+const rtc = ds.dataset('rtc')
 
 export {
     clients,
