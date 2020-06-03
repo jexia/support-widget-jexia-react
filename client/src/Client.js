@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { Widget, addResponseMessage, addUserMessage } from 'react-chat-widget';
-import { clients, chat } from './jexia.js'
+import { clients, chat, my_ds_rtc } from './jexia.js'
 import 'react-chat-widget/lib/styles.css';
 
 const cookie_id = 'jxuid'
@@ -28,6 +28,15 @@ class Client extends Component {
             }, error => {
                 console.log(error);
             });
+
+        this.subscription = my_ds_rtc.watch("created", "updated", "deleted")
+            .subscribe(messageObject => {
+                console.log("Realtime message recieved:", messageObject.data); // message received
+            }, error => {
+                console.log(error);
+            });
+
+
 
         // check if no session_id in localstorage create new one and save in Jexia DataSet Users
         if (session_id === null) {
