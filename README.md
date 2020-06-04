@@ -9,6 +9,8 @@ Modules: DataSet, Real-time communication, Project Users.
 
 ## Running the demo
 
+[![Runme](https://runme.io/static/button.svg)](https://runme.io/run?app_id=875da0fb-09b7-49cb-b1ed-f1b4641abca6)
+
 To run the demo first setup Jexia project:
 
 1. We need to have dataset with name clients. You can use schemaless approach and do not create fields. I did it to have some basic validations and default values. In this dataset we will keep sessions which was open. ![clients dataset](screenshot/project_ds.png)
