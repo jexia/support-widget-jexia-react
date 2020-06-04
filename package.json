@@ -15,7 +15,7 @@
     },
     "scripts": {
         "serve": "react-scripts start",
-        "start": "http-server ./dist -p 80 -a 0.0.0.0",
+        "start": "http-server ./build -p 80 -a 0.0.0.0",
         "build": "react-scripts build",
         "test": "react-scripts test",
         "eject": "react-scripts eject"

@@ -25,7 +25,6 @@ jexiaSDK.jexiaClient().init({
 
 const clients = ds.dataset('clients')
 const chat = ds.dataset('chat')
-const my_ds_rtc = ds.dataset('rtc')
 
 export {
   clients,
