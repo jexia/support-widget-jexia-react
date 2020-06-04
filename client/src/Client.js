@@ -122,16 +122,14 @@ class Client extends Component {
     }
 
     render() {
-        return ( <
-            div className = 'App' >
-            <
-            Widget handleNewUserMessage = { this.handleNewUserMessage }
+        return ( <div className = 'App' >
+            <Widget handleNewUserMessage = { this.handleNewUserMessage }
             title = 'Jexia Support Chat'
             subtitle = 'Ready to help you' /
             >
-            <
-            /div>
+            </div>
         );
+
     }
 }
 
